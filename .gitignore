@@ -94,7 +94,16 @@ FIREBASE_FILES_INFO.md
 # UPLOADED/GENERATED FILES (TOO LARGE)
 # ============================================
 
-# User uploaded media files
+# User uploaded media files (root level)
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.mp4
+uploads/*.mov
+uploads/*.avi
+uploads/*.mkv
+
+# User uploaded media files (server folder)
 server/uploads/*.jpg
 server/uploads/*.jpeg
 server/uploads/*.png
@@ -116,8 +125,9 @@ server/processed/*.mkv
 server/completed/*.jpg
 server/completed/*.jpeg
 server/completed/*.png
-server/fine_tuned_blip_garden_monitor
+
 # Keep the folders but not the files
+!uploads/.gitkeep
 !server/uploads/.gitkeep
 !server/processed/.gitkeep
 !server/completed/.gitkeep
