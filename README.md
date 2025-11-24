@@ -138,7 +138,61 @@ $env:SERVER_BASE_URL = 'http://your-server-ip:5000'
 
 Or edit `server/app.py` line 17 to set your server URL.
 
-#### Step 6: Run the server
+#### Step 6: Download and Setup AI Model ⚠️ IMPORTANT
+
+The AI model is **NOT included in the repository** due to its large size (~1GB).
+
+**📥 Option 1: Get Fine-Tuned Model (Recommended)**
+
+Contact the project maintainer to obtain the `fine_tuned_blip_garden_monitor` folder, then place it in `server/` directory:
+
+```
+server/
+└── fine_tuned_blip_garden_monitor/
+    ├── config.json
+    ├── model.safetensors
+    ├── preprocessor_config.json
+    ├── tokenizer_config.json
+    ├── tokenizer.json
+    └── vocab.txt
+```
+
+**🔄 Option 2: Use Base BLIP Model (Alternative)**
+
+If you don't have the fine-tuned model, use Hugging Face's base model:
+
+Edit `server/blip_processor.py` (line ~10):
+```python
+# Change from:
+FINE_TUNED_MODEL_PATH = os.path.join(CURRENT_SCRIPT_DIR, "fine_tuned_blip_garden_monitor")
+
+# To:
+FINE_TUNED_MODEL_PATH = "Salesforce/blip-image-captioning-base"
+```
+
+First run will auto-download the model (~1GB) from Hugging Face.
+
+**Note**: Base model gives generic captions. Fine-tuned model is trained for garden maintenance issues.
+
+**☁️ Option 3: Host on Cloud Storage**
+
+For team collaboration, host the model on:
+- Google Drive (share folder link)
+- AWS S3 / Azure Blob Storage
+- Hugging Face Hub
+- Git LFS (if your GitHub plan supports large files)
+
+**✅ Verify Model Setup:**
+```powershell
+# Check if model folder exists
+ls server/fine_tuned_blip_garden_monitor/
+
+# Test the model
+cd server
+python -c "from blip_processor import generate_caption; print('Model loaded successfully!')"
+```
+
+#### Step 7: Run the server
 ```powershell
 python app.py
 ```

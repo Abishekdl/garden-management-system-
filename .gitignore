@@ -133,13 +133,11 @@ server/completed/*.png
 !server/completed/.gitkeep
 
 # ============================================
-# AI MODEL FILES (OPTIONAL - VERY LARGE)
+# AI MODEL FILES (EXCLUDED - TOO LARGE ~1GB)
 # ============================================
-# Uncomment these if you want to exclude the AI model from GitHub
-# (You'll need to provide download instructions in README)
-# server/fine_tuned_blip_garden_monitor/*.safetensors
-# server/fine_tuned_blip_garden_monitor/*.bin
-# server/fine_tuned_blip_garden_monitor/model.safetensors
+# AI model is excluded due to size (1GB+)
+# See README.md for download and setup instructions
+server/fine_tuned_blip_garden_monitor/
 
 # ============================================
 # TEMPORARY & CACHE FILES
