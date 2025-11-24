@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garden App - Enhanced Admin Dashboard</title>
+    <link rel="stylesheet" href="admin_styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">🌱 Garden Admin</div>
+        <nav class="nav-menu">
+            <a href="#dashboard" class="nav-item active" onclick="showSection('dashboard')">
+                <span class="icon">📊</span> Dashboard
+            </a>
+            <a href="#tasks" class="nav-item" onclick="showSection('tasks')">
+                <span class="icon">📋</span> All Tasks
+            </a>
+            <a href="#staff" class="nav-item" onclick="showSection('staff')">
+                <span class="icon">👥</span> Staff Management
+            </a>
+            <a href="#students" class="nav-item" onclick="showSection('students')">
+                <span class="icon">🎓</span> Students
+            </a>
+            <a href="#media" class="nav-item" onclick="showSection('media')">
+                <span class="icon">🖼️</span> Media Gallery
+            </a>
+            <a href="#analytics" class="nav-item" onclick="showSection('analytics')">
+                <span class="icon">📈</span> Analytics
+            </a>
+            <a href="#notifications" class="nav-item" onclick="showSection('notifications')">
+                <span class="icon">🔔</span> Notifications
+            </a>
+            <a href="#settings" class="nav-item" onclick="showSection('settings')">
+                <span class="icon">⚙️</span> Settings
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div class="topbar-actions">
+                <button class="btn-icon" onclick="toggleAutoRefresh()" title="Auto Refresh">
+                    <span id="autoRefreshIcon">⏸️</span>
+                </button>
+                <button class="btn-icon" onclick="refreshAll()" title="Refresh All">🔄</button>
+                <span class="last-update">Last updated: <span id="lastUpdate">Never</span></span>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="totalStaff">0</div>
+                    <div class="stat-label">Total Staff</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚦</div>
+                    <div class="stat-value" id="queuedTasks">0</div>
+                    <div class="stat-label">Queued</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎓</div>
+                    <div class="stat-value" id="totalStudents">0</div>
+                    <div class="stat-label">Students</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Task Completion Rate</h3>
+                    <canvas id="completionChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Staff Workload Distribution</h3>
+                    <canvas id="workloadChart"></canvas>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div id="recentActivityList"></div>
+            </div>
+        </div>
+
+        <!-- All Tasks Section -->
+        <div id="tasks" class="section">
+            <div class="section-header">
+                <h2>All Tasks</h2>
+                <div class="filters">
+                    <select id="taskStatusFilter" onchange="filterTasks()">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <input type="text" id="taskSearch" placeholder="Search tasks..." oninput="searchTasks()">
+                    <button class="btn" onclick="exportTasks()">📥 Export CSV</button>
+                </div>
+            </div>
+            <div id="tasksList"></div>
+        </div>
+
+        <!-- Staff Management Section -->
+        <div id="staff" class="section">
+            <div class="section-header">
+                <h2>Staff Management</h2>
+                <button class="btn" onclick="showCreateStaffModal()">➕ Add Staff</button>
+            </div>
+            <div id="staffList"></div>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students" class="section">
+            <div class="section-header">
+                <h2>Student Management</h2>
+                <input type="text" id="studentSearch" placeholder="Search students..." oninput="searchStudents()">
+            </div>
+            <div id="studentsList"></div>
+        </div>
+
+        <!-- Media Gallery Section -->
+        <div id="media" class="section">
+            <div class="section-header">
+                <h2>Media Gallery</h2>
+                <div class="filters">
+                    <select id="mediaTypeFilter" onchange="filterMedia()">
+                        <option value="all">All Media</option>
+                        <option value="image">Images Only</option>
+                        <option value="video">Videos Only</option>
+                    </select>
+                    <button class="btn" onclick="cleanupOldMedia()">🗑️ Cleanup Old Files</button>
+                </div>
+            </div>
+            <div id="mediaGallery" class="media-grid"></div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics" class="section">
+            <h2>Analytics & Reports</h2>
+            <div class="analytics-controls">
+                <select id="analyticsRange">
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="all">All Time</option>
+                </select>
+                <button class="btn" onclick="generateReport()">📊 Generate Report</button>
+            </div>
+            <div id="analyticsContent"></div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notifications" class="section">
+            <h2>Send Notifications</h2>
+            <div class="notification-form">
+                <select id="notifTarget">
+                    <option value="all_staff">All Staff</option>
+                    <option value="all_students">All Students</option>
+                    <option value="specific">Specific User</option>
+                </select>
+                <input type="text" id="notifUserId" placeholder="User ID (if specific)" style="display:none;">
+                <input type="text" id="notifTitle" placeholder="Notification Title">
+                <textarea id="notifBody" placeholder="Notification Message"></textarea>
+                <button class="btn" onclick="sendBroadcastNotification()">📤 Send Notification</button>
+            </div>
+            <div id="notificationHistory"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <h2>System Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>Auto-refresh Interval (seconds)</label>
+                    <input type="number" id="refreshInterval" value="30" min="10" max="300">
+                </div>
+                <div class="setting-item">
+                    <label>Max Image Size (KB)</label>
+                    <input type="number" id="maxImageSize" value="500">
+                </div>
+                <div class="setting-item">
+                    <label>Max Video Size (MB)</label>
+                    <input type="number" id="maxVideoSize" value="10">
+                </div>
+                <div class="setting-item">
+                    <button class="btn" onclick="saveSettings()">💾 Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="createStaffModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('createStaffModal')">&times;</span>
+            <h2>Create New Staff Member</h2>
+            <input type="text" id="newStaffId" placeholder="Staff ID">
+            <input type="text" id="newStaffName" placeholder="Staff Name">
+            <button class="btn" onclick="createStaff()">Create</button>
+        </div>
+    </div>
+
+    <div id="taskDetailModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeModal('taskDetailModal')">&times;</span>
+            <div id="taskDetailContent"></div>
+        </div>
+    </div>
+
+    <script src="admin_script.js?v=20251116-2"></script>
+</body>
+</html>

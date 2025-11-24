@@ -1,0 +1,156 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ============================================
+# SENSITIVE FILES - DO NOT COMMIT TO GITHUB
+# ============================================
+
+# Firebase Service Account Key (CRITICAL - NEVER COMMIT)
+server/serviceAccountKey.json
+**/serviceAccountKey.json
+
+# Firebase Configuration Files (Project-specific)
+firebase.json
+.firebaserc
+firestore.rules
+firestore.indexes.json
+storage.rules
+database.rules.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+server/.env
+server/.env.local
+
+# Python Virtual Environment
+server/venv/
+server/.venv/
+server/env/
+venv/
+env/
+*.pyc
+__pycache__/
+server/__pycache__/
+
+# Custom folders to exclude
+don't_want/
+**/don't_want/
+
+# Documentation files (keep only README.md in repo)
+GITHUB_PUSH_GUIDE.md
+GITHUB_SUMMARY.md
+PRE_PUSH_CHECKLIST.md
+SETUP_AFTER_CLONE.md
+FIREBASE_SETUP.md
+FIREBASE_FILES_INFO.md
+
+
+# ============================================
+# UPLOADED/GENERATED FILES (TOO LARGE)
+# ============================================
+
+# User uploaded media files
+server/uploads/*.jpg
+server/uploads/*.jpeg
+server/uploads/*.png
+server/uploads/*.mp4
+server/uploads/*.mov
+server/uploads/*.avi
+server/uploads/*.mkv
+
+# Processed media files
+server/processed/*.jpg
+server/processed/*.jpeg
+server/processed/*.png
+server/processed/*.mp4
+server/processed/*.mov
+server/processed/*.avi
+server/processed/*.mkv
+
+# Completed task photos
+server/completed/*.jpg
+server/completed/*.jpeg
+server/completed/*.png
+server/fine_tuned_blip_garden_monitor
+# Keep the folders but not the files
+!server/uploads/.gitkeep
+!server/processed/.gitkeep
+!server/completed/.gitkeep
+
+# ============================================
+# AI MODEL FILES (OPTIONAL - VERY LARGE)
+# ============================================
+# Uncomment these if you want to exclude the AI model from GitHub
+# (You'll need to provide download instructions in README)
+# server/fine_tuned_blip_garden_monitor/*.safetensors
+# server/fine_tuned_blip_garden_monitor/*.bin
+# server/fine_tuned_blip_garden_monitor/model.safetensors
+
+# ============================================
+# TEMPORARY & CACHE FILES
+# ============================================
+*.tmp
+*.temp
+*.cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS specific
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+server/logs/
+
+# Database files (if using SQLite)
+*.db
+*.sqlite
+*.sqlite3

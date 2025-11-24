@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification color for Garden App -->
+    <color name="notification_color">#4CAF50</color>
+    
+    <!-- Additional colors for the app -->
+    <color name="primary_green">#4CAF50</color>
+    <color name="dark_green">#388E3C</color>
+    <color name="light_green">#C8E6C9</color>
+    <color name="accent_orange">#FF9800</color>
+</resources>

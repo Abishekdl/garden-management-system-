@@ -1,0 +1,2 @@
+# This file ensures the processed folder is tracked by git
+# Actual processed files are ignored by .gitignore

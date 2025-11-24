@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for development servers -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Local development servers -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        
+        <!-- Development server IPs -->
+        <domain includeSubdomains="true">10.117.108.82</domain>
+        <domain includeSubdomains="true">192.168.0.105</domain>
+        
+        <!-- Tunnel URL for remote access -->
+        <domain includeSubdomains="true">zhgkq02n-5000.inc1.devtunnels.ms</domain>
+        
+        <!-- Common local network ranges -->
+        <domain includeSubdomains="true">192.168.1.0/24</domain>
+        <domain includeSubdomains="true">192.168.0.0/24</domain>
+        <domain includeSubdomains="true">10.0.0.0/8</domain>
+    </domain-config>
+    
+    <!-- For production, remove the above and use HTTPS only -->
+    <!-- 
+    <base-config cleartextTrafficPermitted="false" />
+    -->
+</network-security-config>

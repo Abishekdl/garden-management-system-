@@ -1,0 +1,2 @@
+# This file ensures the completed folder is tracked by git
+# Actual completed files are ignored by .gitignore

@@ -1,0 +1,12 @@
+Flask
+torch
+Pillow
+transformers
+tqdm
+python-dotenv
+opencv-python
+geopy
+firebase-admin
+requests
+reportlab
+flask-cors

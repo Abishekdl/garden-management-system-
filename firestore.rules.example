@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Students collection - allow read/write for authenticated users
+    match /students/{studentId} {
+      allow read, write: if true;  // Change to proper auth in production
+    }
+    
+    // Staff collection - allow read/write for authenticated users
+    match /staff/{staffId} {
+      allow read, write: if true;  // Change to proper auth in production
+    }
+    
+    // Tasks collection - allow read/write for authenticated users
+    match /tasks/{taskId} {
+      allow read, write: if true;  // Change to proper auth in production
+    }
+    
+    // Notifications collection - allow read/write for authenticated users
+    match /notifications/{userId}/user_notifications/{notificationId} {
+      allow read, write: if true;  // Change to proper auth in production
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// IMPORTANT: These are permissive rules for development
+// For production, implement proper authentication:
+// - Use Firebase Authentication
+// - Verify user identity with request.auth
+// - Implement role-based access control
+// Example:
+// allow read: if request.auth != null && request.auth.uid == studentId;
