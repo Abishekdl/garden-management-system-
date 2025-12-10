@@ -1,2 +1,2 @@
-# This file ensures the uploads folder is tracked by git
+git commit -m "first commit"# This file ensures the uploads folder is tracked by git
 # Actual uploaded files are ignored by .gitignore

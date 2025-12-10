@@ -1339,6 +1339,179 @@ def clear_queue():
         print(f"Error clearing queue: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ============================================
+# ADMIN TASK REASSIGNMENT FEATURE
+# ============================================
+
+@app.route('/admin/reassign_task', methods=['POST'])
+def reassign_task_admin():
+    """Admin can manually reassign a task to a different staff member"""
+    try:
+        data = request.json
+        task_id = data.get('taskId')
+        new_staff_id = data.get('staffId')
+        
+        if not task_id or not new_staff_id:
+            return jsonify({'error': 'taskId and staffId are required'}), 400
+        
+        db = firestore.client()
+        
+        # Verify task exists
+        task_ref = db.collection('tasks').document(task_id)
+        task_doc = task_ref.get()
+        
+        if not task_doc.exists:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        task_data = task_doc.to_dict()
+        old_staff_id = task_data.get('assignedTo', 'unassigned')
+        
+        # Verify new staff exists
+        staff_doc = db.collection('staff').document(new_staff_id).get()
+        if not staff_doc.exists:
+            return jsonify({'error': f'Staff member {new_staff_id} not found'}), 404
+        
+        staff_data = staff_doc.to_dict()
+        
+        # Update task assignment
+        task_ref.update({
+            'assignedTo': new_staff_id,
+            'reassignedAt': firestore.SERVER_TIMESTAMP,
+            'reassignedFrom': old_staff_id,
+            'reassignedBy': 'admin'
+        })
+        
+        print(f"📋 Task {task_id} reassigned from {old_staff_id} to {new_staff_id} by admin")
+        
+        # Send notification to new staff member
+        caption = task_data.get('aiCaption', task_data.get('studentCaption', 'New task assigned'))
+        location = task_data.get('location', 'Unknown location')
+        send_notification_to_assigned_staff(new_staff_id, caption, location, task_id)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Task reassigned to {staff_data.get("name", new_staff_id)}',
+            'taskId': task_id,
+            'oldStaffId': old_staff_id,
+            'newStaffId': new_staff_id,
+            'newStaffName': staff_data.get('name', new_staff_id)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error reassigning task: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/bulk_reassign', methods=['POST'])
+def bulk_reassign_tasks_admin():
+    """Admin can reassign multiple tasks at once"""
+    try:
+        data = request.json
+        task_ids = data.get('taskIds', [])
+        new_staff_id = data.get('staffId')
+        
+        if not task_ids or not new_staff_id:
+            return jsonify({'error': 'taskIds array and staffId are required'}), 400
+        
+        db = firestore.client()
+        
+        # Verify staff exists
+        staff_doc = db.collection('staff').document(new_staff_id).get()
+        if not staff_doc.exists:
+            return jsonify({'error': f'Staff member {new_staff_id} not found'}), 404
+        
+        staff_data = staff_doc.to_dict()
+        
+        success_count = 0
+        failed_tasks = []
+        
+        for task_id in task_ids:
+            try:
+                task_ref = db.collection('tasks').document(task_id)
+                task_doc = task_ref.get()
+                
+                if task_doc.exists:
+                    old_staff = task_doc.to_dict().get('assignedTo', 'unassigned')
+                    task_ref.update({
+                        'assignedTo': new_staff_id,
+                        'reassignedAt': firestore.SERVER_TIMESTAMP,
+                        'reassignedFrom': old_staff,
+                        'reassignedBy': 'admin'
+                    })
+                    success_count += 1
+                else:
+                    failed_tasks.append({'taskId': task_id, 'reason': 'Task not found'})
+            except Exception as task_error:
+                failed_tasks.append({'taskId': task_id, 'reason': str(task_error)})
+        
+        print(f"📋 Bulk reassign: {success_count} tasks reassigned to {new_staff_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{success_count} tasks reassigned to {staff_data.get("name", new_staff_id)}',
+            'successCount': success_count,
+            'failedCount': len(failed_tasks),
+            'failedTasks': failed_tasks
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error in bulk reassign: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/unassigned_tasks', methods=['GET'])
+def get_unassigned_tasks_admin():
+    """Get all tasks that are unassigned or assigned to non-existent staff"""
+    try:
+        db = firestore.client()
+        
+        # Get all tasks
+        all_tasks = list(db.collection('tasks').stream())
+        
+        # Get all valid staff IDs
+        staff_docs = list(db.collection('staff').stream())
+        valid_staff_ids = [doc.id for doc in staff_docs]
+        
+        unassigned_tasks = []
+        
+        for task_doc in all_tasks:
+            task_data = task_doc.to_dict()
+            assigned_to = task_data.get('assignedTo')
+            
+            # Task is unassigned if:
+            # 1. No assignedTo field
+            # 2. assignedTo is empty
+            # 3. assignedTo is a staff that doesn't exist
+            is_unassigned = (
+                not assigned_to or 
+                assigned_to == '' or 
+                assigned_to not in valid_staff_ids
+            )
+            
+            if is_unassigned and task_data.get('status') != 'completed':
+                created_at = task_data.get('createdAt')
+                unassigned_tasks.append({
+                    'taskId': task_doc.id,
+                    'studentName': task_data.get('studentName', 'Unknown'),
+                    'registerNumber': task_data.get('registerNumber', 'Unknown'),
+                    'aiCaption': task_data.get('aiCaption', ''),
+                    'studentCaption': task_data.get('studentCaption', ''),
+                    'location': task_data.get('location', 'Unknown'),
+                    'imageUrl': task_data.get('imageUrl', ''),
+                    'status': task_data.get('status', 'pending'),
+                    'assignedTo': assigned_to or 'unassigned',
+                    'createdAt': created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at),
+                    'reason': 'No assignment' if not assigned_to else f'Staff {assigned_to} not found'
+                })
+        
+        return jsonify({
+            'unassignedTasks': unassigned_tasks,
+            'total': len(unassigned_tasks),
+            'validStaffIds': valid_staff_ids
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error getting unassigned tasks: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/admin/send_notification', methods=['POST'])
 def send_broadcast_notification_admin():
     """Send notification to users from admin panel"""

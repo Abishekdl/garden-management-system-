@@ -534,6 +534,9 @@ function displayStaffTasks(tasks, staffId, staffName) {
                             <button class="btn btn-success" onclick="markTaskComplete('${task.taskId}')">
                                 ✅ Mark Complete
                             </button>
+                            <button class="btn" style="background: #ff9800; color: white;" onclick="showReassignModal('${task.taskId}', '${task.assignedTo || ''}', '${(task.aiCaption || '').replace(/'/g, "\\'")}')">
+                                🔄 Reassign
+                            </button>
                         ` : ''}
                     </div>
                 </div>
@@ -912,3 +915,273 @@ window.onclick = function(event) {
 async function loadCharts() {
     console.log('📊 Charts would be loaded here with Chart.js library');
 }
+
+// ============================================
+// TASK REASSIGNMENT FUNCTIONS
+// ============================================
+
+// Store staff list for reassignment dropdown
+let staffListForReassign = [];
+
+// Load staff list for reassignment
+async function loadStaffForReassign() {
+    try {
+        const response = await fetch(`${SERVER_URL}/admin/all_staff`);
+        if (response.ok) {
+            const data = await response.json();
+            staffListForReassign = data.staff || [];
+            return staffListForReassign;
+        }
+    } catch (error) {
+        console.error('Error loading staff for reassign:', error);
+    }
+    return [];
+}
+
+// Show reassign task modal
+async function showReassignModal(taskId, currentStaffId, taskCaption) {
+    // Load staff list if not already loaded
+    if (staffListForReassign.length === 0) {
+        await loadStaffForReassign();
+    }
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('reassignTaskModal');
+    if (!modal) {
+        modal = createReassignModal();
+    }
+    
+    // Populate staff dropdown
+    const staffSelect = document.getElementById('reassignStaffSelect');
+    staffSelect.innerHTML = staffListForReassign.map(staff => `
+        <option value="${staff.staffId}" ${staff.staffId === currentStaffId ? 'selected' : ''}>
+            ${staff.name} (${staff.staffId}) - ${staff.taskCounts?.pending || 0} pending tasks
+        </option>
+    `).join('');
+    
+    // Store task info
+    document.getElementById('reassignTaskId').value = taskId;
+    document.getElementById('reassignTaskCaption').textContent = taskCaption || 'No caption';
+    document.getElementById('reassignCurrentStaff').textContent = currentStaffId || 'Unassigned';
+    
+    modal.classList.add('active');
+}
+
+// Create reassign modal HTML
+function createReassignModal() {
+    const modal = document.createElement('div');
+    modal.id = 'reassignTaskModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>🔄 Reassign Task</h2>
+                <button class="close-btn" onclick="closeModal('reassignTaskModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reassignTaskId">
+                
+                <div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+                    <p style="margin: 5px 0;"><strong>Task:</strong> <span id="reassignTaskCaption"></span></p>
+                    <p style="margin: 5px 0;"><strong>Currently Assigned:</strong> <span id="reassignCurrentStaff"></span></p>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label for="reassignStaffSelect" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        Assign to Staff Member:
+                    </label>
+                    <select id="reassignStaffSelect" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+                        <option value="">Loading staff...</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn" onclick="closeModal('reassignTaskModal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="confirmReassignTask()">
+                        ✅ Reassign Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+}
+
+// Confirm and execute task reassignment
+async function confirmReassignTask() {
+    const taskId = document.getElementById('reassignTaskId').value;
+    const newStaffId = document.getElementById('reassignStaffSelect').value;
+    
+    if (!taskId || !newStaffId) {
+        alert('Please select a staff member');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${SERVER_URL}/admin/reassign_task`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskId, staffId: newStaffId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ Task reassigned to ${data.newStaffName}`);
+            closeModal('reassignTaskModal');
+            
+            // Refresh the current view
+            refreshAll();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to reassign task'));
+        }
+    } catch (error) {
+        alert('❌ Network error: ' + error.message);
+    }
+}
+
+// Load and display unassigned tasks
+async function loadUnassignedTasks() {
+    try {
+        const response = await fetch(`${SERVER_URL}/admin/unassigned_tasks`);
+        if (response.ok) {
+            const data = await response.json();
+            displayUnassignedTasks(data.unassignedTasks, data.validStaffIds);
+        }
+    } catch (error) {
+        console.error('Error loading unassigned tasks:', error);
+    }
+}
+
+// Display unassigned tasks with reassign option
+function displayUnassignedTasks(tasks, validStaffIds) {
+    // Create or get unassigned tasks section
+    let section = document.getElementById('unassignedTasksSection');
+    if (!section) {
+        section = document.createElement('div');
+        section.id = 'unassignedTasksSection';
+        section.className = 'card';
+        section.style.marginTop = '20px';
+        
+        // Add to tasks section
+        const tasksSection = document.getElementById('tasks');
+        if (tasksSection) {
+            tasksSection.insertBefore(section, tasksSection.firstChild);
+        }
+    }
+    
+    if (!tasks || tasks.length === 0) {
+        section.innerHTML = `
+            <h3>📋 Unassigned Tasks</h3>
+            <p style="color: green;">✅ All tasks are assigned to staff members!</p>
+        `;
+        return;
+    }
+    
+    section.innerHTML = `
+        <h3>⚠️ Unassigned Tasks (${tasks.length})</h3>
+        <p style="color: #ff9800; margin-bottom: 15px;">These tasks need to be assigned to a staff member:</p>
+        <div id="unassignedTasksList">
+            ${tasks.map(task => `
+                <div class="task-card" style="margin-bottom: 10px; padding: 15px; border: 2px solid #ff9800; border-radius: 8px; background: #fff8e1;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0;">${task.aiCaption || task.studentCaption || 'No caption'}</h4>
+                            <p style="margin: 3px 0;"><strong>Student:</strong> ${task.studentName} (${task.registerNumber})</p>
+                            <p style="margin: 3px 0;"><strong>Location:</strong> ${task.location}</p>
+                            <p style="margin: 3px 0; color: #666; font-size: 0.9em;">
+                                <strong>Reason:</strong> ${task.reason}
+                            </p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showReassignModal('${task.taskId}', '', '${(task.aiCaption || '').replace(/'/g, "\\'")}')">
+                            👤 Assign Staff
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        <div style="margin-top: 15px;">
+            <button class="btn btn-success" onclick="autoAssignAllUnassigned()">
+                🔄 Auto-Assign All to Least Loaded Staff
+            </button>
+        </div>
+    `;
+}
+
+// Auto-assign all unassigned tasks
+async function autoAssignAllUnassigned() {
+    if (!confirm('This will automatically assign all unassigned tasks to staff members based on workload. Continue?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${SERVER_URL}/queue/process`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ ${data.tasksAssigned} tasks have been assigned!`);
+            refreshAll();
+            loadUnassignedTasks();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to process queue'));
+        }
+    } catch (error) {
+        alert('❌ Network error: ' + error.message);
+    }
+}
+
+// Add reassign button to task cards in displayTasks function
+function addReassignButtonToTasks() {
+    // This modifies the existing displayTasks function behavior
+    const originalDisplayTasks = displayTasks;
+    displayTasks = function(tasks) {
+        const container = document.getElementById('tasksList');
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<div class="loading">No tasks found</div>';
+            return;
+        }
+        
+        container.innerHTML = tasks.map(task => `
+            <div class="task-card" style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;" onclick="showTaskDetail('${task.taskId}')">
+                        <h3>${task.aiCaption || 'No caption'}</h3>
+                        <p><strong>Student:</strong> ${task.studentName} (${task.registerNumber})</p>
+                        <p><strong>Location:</strong> ${task.location}</p>
+                        <p><strong>Assigned to:</strong> ${task.assignedTo || 'Unassigned'}</p>
+                        <p><small>${task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown date'}</small></p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                        <span class="status-badge status-${task.status}">${task.status}</span>
+                        ${task.status === 'pending' ? `
+                            <button class="btn btn-primary" onclick="event.stopPropagation(); showReassignModal('${task.taskId}', '${task.assignedTo || ''}', '${(task.aiCaption || '').replace(/'/g, "\\'")}')">
+                                🔄 Reassign
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    };
+}
+
+// Initialize reassign functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Load staff list for reassignment
+    loadStaffForReassign();
+    
+    // Add reassign buttons to tasks
+    addReassignButtonToTasks();
+});
+
+// Also load unassigned tasks when viewing tasks section
+const originalLoadAllTasks = loadAllTasks;
+loadAllTasks = async function() {
+    await originalLoadAllTasks();
+    await loadUnassignedTasks();
+};
