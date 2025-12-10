@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCBuO42V14J5pxg1VqUjQ75R4_-WR5ETg8',
+    apiKey: 'yourapi_key',
     appId: '1:325848117035:android:ead2f8fe30e4593003df6e',
     messagingSenderId: '325848117035',
     projectId: 'garden-main',
@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDha2XT7dgEvq0RnlDBET3b6LKI_rK3RH8',
+    apiKey: 'yourapi_key',
     appId: '1:325848117035:ios:4d1e66d52ede20dd03df6e',
     messagingSenderId: '325848117035',
     projectId: 'garden-main',
